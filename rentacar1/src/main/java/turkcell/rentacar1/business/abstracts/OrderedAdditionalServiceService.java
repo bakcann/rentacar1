@@ -18,7 +18,7 @@ public interface OrderedAdditionalServiceService {
 	
 	DataResult<List<ListOrderedAdditionalServiceDto>> getAll();
 	DataResult<GetListOrderedAdditionalServiceDto> getById(int orderedId);
-	public boolean checkIfExistRentalByRentalId(int rentId);
+	public boolean checkIfExistsRentalByRentalId(int rentId);
 	
 
 }

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import turkcell.rentacar1.business.abstracts.CardService;
 import turkcell.rentacar1.business.abstracts.CustomerService;
+import turkcell.rentacar1.business.constants.BusinessMessages;
 import turkcell.rentacar1.business.dtos.GetListCardDto;
 import turkcell.rentacar1.business.dtos.ListCardDto;
 import turkcell.rentacar1.business.requests.creates.CreateCardRequest;
@@ -44,7 +45,7 @@ public class CardManager implements CardService{
 		
 		this.cardDao.save(card);
 		
-		return new SuccessResult("Kredi kartı eklendi.");
+		return new SuccessResult(BusinessMessages.CARDADDED);
 	}
 
 	@Override
@@ -52,7 +53,7 @@ public class CardManager implements CardService{
 		
 		this.cardDao.deleteById(deleteCardRequest.getCardId());
 		
-		return new SuccessResult("Kredi kartı silindi");
+		return new SuccessResult(BusinessMessages.CARDDELETED);
 	}
 
 	@Override
@@ -62,7 +63,7 @@ public class CardManager implements CardService{
 		
 		List<ListCardDto> response = result.stream().map(card -> this.modelMapperService.forDto().map(card, ListCardDto.class)).collect(Collectors.toList());
 		
-		return new SuccessDataResult<List<ListCardDto>>(response);
+		return new SuccessDataResult<List<ListCardDto>>(response,BusinessMessages.SUCCESS);
 	}
 
 	@Override
@@ -74,7 +75,7 @@ public class CardManager implements CardService{
 		
 		GetListCardDto response = this.modelMapperService.forDto().map(result, GetListCardDto.class);
 		
-		return new SuccessDataResult<GetListCardDto>(response);
+		return new SuccessDataResult<GetListCardDto>(response,BusinessMessages.SUCCESS);
 	}
 
 	@Override
@@ -84,13 +85,13 @@ public class CardManager implements CardService{
 		
 		GetListCardDto response = this.modelMapperService.forDto().map(result, GetListCardDto.class);
 		
-		return new SuccessDataResult<GetListCardDto>(response);
+		return new SuccessDataResult<GetListCardDto>(response, BusinessMessages.SUCCESS);
 	}
 	
 	private boolean checkIfExistCardId(int cardId) {
 		var result = this.cardDao.getByCardId(cardId);
 		if(result== null) {
-			throw new BusinessException("Böyle bir kredi kartı mevcut değil.");
+			throw new BusinessException(BusinessMessages.CARDNOTFOUND);
 		}
 		return true;
 	}

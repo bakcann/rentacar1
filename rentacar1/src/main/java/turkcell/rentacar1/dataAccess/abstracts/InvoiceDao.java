@@ -12,6 +12,7 @@ import turkcell.rentacar1.entities.concretes.Invoice;
 public interface InvoiceDao extends JpaRepository<Invoice, Integer>{
 	
 	public Invoice getByInvoiceId(int invoiceId);
+	public Invoice getByInvoiceNo(String invoiceNo);
 	List<Invoice> getByRental_rentId(int rentId);
 	
 	List<Invoice> getByCustomer_customerId(int customerId);

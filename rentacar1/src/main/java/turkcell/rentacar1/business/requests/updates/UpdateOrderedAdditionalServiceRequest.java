@@ -16,9 +16,9 @@ public class UpdateOrderedAdditionalServiceRequest {
 	@Positive
 	private int orderedId;
 	
-	/*@NotNull
+	@NotNull
 	@Positive
-	private int rentId;*/
+	private int rentId;
 	
 	@NotNull
 	@Positive

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import turkcell.rentacar1.business.abstracts.CustomerService;
 import turkcell.rentacar1.business.abstracts.InvoiceService;
 import turkcell.rentacar1.business.abstracts.RentalService;
+import turkcell.rentacar1.business.constants.BusinessMessages;
 import turkcell.rentacar1.business.dtos.GetListInvoiceDto;
 import turkcell.rentacar1.business.dtos.ListInvoiceDto;
 import turkcell.rentacar1.business.requests.creates.CreateInvoiceRequest;
@@ -45,17 +46,19 @@ public class InvoiceManager implements InvoiceService{
 
 	@Override
 	public DataResult<Invoice> add(CreateInvoiceRequest createInvoiceRequest) {
+		checkIfNotExistsByInvoiceNo(createInvoiceRequest.getInvoiceNo());
+		
 		checkIfExistCustomer(createInvoiceRequest.getCustomerId());
 		checkIfExistRental(createInvoiceRequest.getRental().getRentId());
 		checkIfInvoiceExistForRental(createInvoiceRequest.getRental().getRentId());
 		
 		if(checkIfRentalCar_ReturnDateEqualPlannedReturnDate(createInvoiceRequest.getRental().getRentId())) {
-			return new ErrorDataResult<Invoice>(null, "Invoıce eklenme hatası");
+			return new ErrorDataResult<Invoice>(null, BusinessMessages.INVOICEADDERROR);
 		}
 		Invoice invoice = setForAddMethod(createInvoiceRequest);
 		this.invoiceDao.save(invoice);
 		
-		return new SuccessDataResult<Invoice>(invoice, "Invoıce eklendı");
+		return new SuccessDataResult<Invoice>(invoice, BusinessMessages.INVOICEADDED);
 	}
 
 	@Override
@@ -65,7 +68,7 @@ public class InvoiceManager implements InvoiceService{
 		
 		this.invoiceDao.deleteById(deleteInvoiceRequest.getInvoiceId());
 		
-		return new SuccessResult("Invoıce delete");
+		return new SuccessResult(BusinessMessages.INVOICEDELETED);
 	}
 
 	@Override
@@ -78,7 +81,7 @@ public class InvoiceManager implements InvoiceService{
 		
 		this.invoiceDao.save(invoice);
 		
-		return new SuccessResult("Invoıce update");
+		return new SuccessResult(BusinessMessages.INVOICEUPDATED);
 	}
 
 	@Override
@@ -89,7 +92,7 @@ public class InvoiceManager implements InvoiceService{
 		List<ListInvoiceDto> response = result.stream().map(invoice -> this.modelMapperService.forDto().map(invoice, ListInvoiceDto.class)).collect(Collectors.toList());
 		response = toSetReturnDateForGetAll(result, response);
 		
-		return new SuccessDataResult<List<ListInvoiceDto>>(response,"Success");
+		return new SuccessDataResult<List<ListInvoiceDto>>(response,BusinessMessages.SUCCESS);
 	}
 
 	@Override
@@ -101,7 +104,7 @@ public class InvoiceManager implements InvoiceService{
 		
 		GetListInvoiceDto response = this.modelMapperService.forDto().map(result, GetListInvoiceDto.class);
 		
-		return new SuccessDataResult<GetListInvoiceDto>(response, "Success");
+		return new SuccessDataResult<GetListInvoiceDto>(response, BusinessMessages.SUCCESS);
 	}
 
 	@Override
@@ -111,7 +114,7 @@ public class InvoiceManager implements InvoiceService{
 		
 		List<ListInvoiceDto> response = result.stream().map(invoice -> this.modelMapperService.forDto().map(invoice, ListInvoiceDto.class)).collect(Collectors.toList());
 		
-		return new SuccessDataResult<List<ListInvoiceDto>>(response,"Success");
+		return new SuccessDataResult<List<ListInvoiceDto>>(response,BusinessMessages.SUCCESS);
 	}
 
 	@Override
@@ -122,7 +125,7 @@ public class InvoiceManager implements InvoiceService{
 		var result = this.invoiceDao.getByCustomer_customerId(customerId);
 		List<ListInvoiceDto> response = result.stream().map(invoice -> this.modelMapperService.forDto().map(invoice, ListInvoiceDto.class)).collect(Collectors.toList());
 		
-		return new SuccessDataResult<List<ListInvoiceDto>>(response,"Success");
+		return new SuccessDataResult<List<ListInvoiceDto>>(response,BusinessMessages.SUCCESS);
 	}
 	
 	
@@ -140,7 +143,7 @@ public class InvoiceManager implements InvoiceService{
 		var result= this.invoiceDao.getByRental_rentId(rentId);
 		if(result!=null) {
 			if(result.size()== 1 && this.rentalService.getByRentalId(rentId).getData().getRentReturnDate()== null || result.size() == 2) {
-				throw new BusinessException("Invoice kiralama hatası");
+				throw new BusinessException(BusinessMessages.INVOICEEXISTSRENTAL);
 			}
 		}
 		return true;
@@ -149,13 +152,21 @@ public class InvoiceManager implements InvoiceService{
 	private boolean checkIfExistByInvoiceId(int invoiceId) {
 		var result = this.invoiceDao.getByInvoiceId(invoiceId);
 		if(result==null) {
-			throw new BusinessException("bu ideye sahip invoice bulunamadı");
+			throw new BusinessException(BusinessMessages.INVOICENOTFOUND);
 		}
 		return true;
 	}
 	
+	private boolean checkIfNotExistsByInvoiceNo(String invoiceNo) {
+		var result = this.invoiceDao.getByInvoiceNo(invoiceNo);
+		if(result== null) {
+			return true;
+		}
+		throw new BusinessException(BusinessMessages.INVOICENOTEXISTSINVOICENO);
+	}
+	
 	private boolean checkIfExistRental(int rentId) {
-		this.rentalService.checkIfExistRentalId(rentId);
+		this.rentalService.checkIfExistsRentalId(rentId);
 		return true;
 	}
 	

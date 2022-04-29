@@ -8,12 +8,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import turkcell.rentacar1.business.abstracts.CardService;
-import turkcell.rentacar1.business.abstracts.CustomerService;
 import turkcell.rentacar1.business.abstracts.InvoiceService;
 import turkcell.rentacar1.business.abstracts.OrderedAdditionalServiceService;
 import turkcell.rentacar1.business.abstracts.PaymentService;
 import turkcell.rentacar1.business.abstracts.PosService;
 import turkcell.rentacar1.business.abstracts.RentalService;
+import turkcell.rentacar1.business.constants.BusinessMessages;
 import turkcell.rentacar1.business.dtos.GetListPaymentDto;
 import turkcell.rentacar1.business.dtos.ListPaymentDto;
 import turkcell.rentacar1.business.requests.creates.CreateCardRequest;
@@ -23,7 +23,6 @@ import turkcell.rentacar1.business.requests.creates.CreateOrderedAdditionalServi
 import turkcell.rentacar1.business.requests.creates.CreatePaymentExtraRequest;
 import turkcell.rentacar1.business.requests.creates.CreatePaymentRequest;
 import turkcell.rentacar1.business.requests.creates.CreateRentalRequest;
-import turkcell.rentacar1.business.requests.deletes.DeletePaymentRequest;
 import turkcell.rentacar1.business.requests.updates.UpdateRentalRequest;
 import turkcell.rentacar1.core.concretes.BusinessException;
 import turkcell.rentacar1.core.utilities.mapping.ModelMapperService;
@@ -44,19 +43,17 @@ public class PaymentManager implements PaymentService  {
 	private ModelMapperService modelMapperService;
 	private RentalService rentalService;
 	private OrderedAdditionalServiceService orderedAdditionalServiceService;
-	private CustomerService customerService;
 	private InvoiceService invoiceService;
 	private PosService posService;
 	private CardService cardService;
 	
 	public PaymentManager(PaymentDao paymentDao, ModelMapperService modelMapperService, RentalService rentalService,
-			OrderedAdditionalServiceService orderedAdditionalServiceService, CustomerService customerService,
+			OrderedAdditionalServiceService orderedAdditionalServiceService,
 			InvoiceService invoiceService,@Lazy PosService posService, CardService cardService) {
 		this.paymentDao = paymentDao;
 		this.modelMapperService = modelMapperService;
 		this.rentalService = rentalService;
 		this.orderedAdditionalServiceService = orderedAdditionalServiceService;
-		this.customerService = customerService;
 		this.invoiceService = invoiceService;
 		this.posService = posService;
 		this.cardService = cardService;
@@ -79,7 +76,7 @@ public class PaymentManager implements PaymentService  {
 		
 		Payment payment = toSetPayment(rental, invoice);
 		this.paymentDao.save(payment);
-		return new SuccessResult("PaymentService.added");
+		return new SuccessResult(BusinessMessages.PAYMENTADDED);
 	}
 
 	@Override
@@ -92,7 +89,7 @@ public class PaymentManager implements PaymentService  {
 		Invoice invoice = addToInvoice(rental, createPaymentExtraRequest.getCreateInvoiceRequest());
 		
 		if(invoice==null) {
-			return new ErrorResult("PaymentService.add.error");
+			return new ErrorResult(BusinessMessages.PAYMENTADDERROR);
 		}
 		
 		addToCard(createPaymentExtraRequest.isSaveCard(), invoice.getCustomer().getCustomerId(), createPaymentExtraRequest.getCreateCard().getCardOwnerName(), 
@@ -103,16 +100,7 @@ public class PaymentManager implements PaymentService  {
 		
 		Payment payment =toSetPayment(rental, invoice);
 		this.paymentDao.save(payment);
-		return new SuccessResult("PaymentService.added");
-	}
-
-	@Override
-	public Result delete(DeletePaymentRequest deletePaymentRequest) {
-		checkIfPaymentExists(deletePaymentRequest.getPaymentId());
-		
-		this.paymentDao.deleteById(deletePaymentRequest.getPaymentId());
-		
-		return new SuccessResult("Paymentservice.deleted");
+		return new SuccessResult(BusinessMessages.PAYMENTADDED);
 	}
 
 	@Override
@@ -121,7 +109,7 @@ public class PaymentManager implements PaymentService  {
 		var result = this.paymentDao.findAll();
 		
 		List<ListPaymentDto> response = result.stream().map(payment -> this.modelMapperService.forDto().map(payment, ListPaymentDto.class)).collect(Collectors.toList());
-		return new SuccessDataResult<List<ListPaymentDto>>(response,"Success");
+		return new SuccessDataResult<List<ListPaymentDto>>(response,BusinessMessages.SUCCESS);
 	}
 
 	@Override
@@ -132,7 +120,7 @@ public class PaymentManager implements PaymentService  {
 		
 		GetListPaymentDto response = this.modelMapperService.forDto().map(result, GetListPaymentDto.class);
 		
-		return new SuccessDataResult<GetListPaymentDto>(response,"Success");
+		return new SuccessDataResult<GetListPaymentDto>(response,BusinessMessages.SUCCESS);
 	}
 	private Payment checkIfPaymentExists(int paymentId) {
 		
@@ -140,7 +128,7 @@ public class PaymentManager implements PaymentService  {
 		
 		if(result== null) {
 			
-			throw new BusinessException("Payment not found");
+			throw new BusinessException(BusinessMessages.PAYMENTNOTFOUND);
 		}
 		return result;
 	}

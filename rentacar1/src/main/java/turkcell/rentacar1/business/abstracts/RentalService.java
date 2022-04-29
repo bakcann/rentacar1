@@ -25,7 +25,7 @@ public interface RentalService {
 	
 	DataResult<List<GetListRentalDto>> getByCar_CarId(int carId);
 	
-	public boolean checkIfExistRentalId(int rentId);
+	public boolean checkIfExistsRentalId(int rentId);
 	public boolean checkIfCarNotInRent(int carId);
 	public void totalPriceIncludingAdditionalService(int rentId);
 	public Rental getByRentalIdForOtherServices(int rentId);

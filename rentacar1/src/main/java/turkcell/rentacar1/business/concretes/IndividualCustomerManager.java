@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import turkcell.rentacar1.business.abstracts.IndividualCustomerService;
+import turkcell.rentacar1.business.constants.BusinessMessages;
 import turkcell.rentacar1.business.dtos.ListIndividualCustomerDto;
 import turkcell.rentacar1.business.requests.creates.CreateIndividualCustomerRequest;
 import turkcell.rentacar1.business.requests.deletes.DeleteIndividualCustomerRequest;
@@ -36,36 +37,36 @@ public class IndividualCustomerManager implements IndividualCustomerService{
 	@Override
 	public Result add(CreateIndividualCustomerRequest createIndividualCustomerRequest) {
 		
-		checkIfExistByEmail(createIndividualCustomerRequest.getEmail());
-		checkIfExistByIdentityNumber(createIndividualCustomerRequest.getIdentityNumber());
+		checkIfNotExistsByEmail(createIndividualCustomerRequest.getEmail());
+		checkIfNotExistsByIdentityNumber(createIndividualCustomerRequest.getIdentityNumber());
 		
 		IndividualCustomer individualCustomer = this.modelMapperService.forRequest().map(createIndividualCustomerRequest, IndividualCustomer.class);
 		this.individualCustomerDao.save(individualCustomer);
 		
-		return new SuccessResult("IndividualCustomer eklendi");
+		return new SuccessResult(BusinessMessages.INDIVIDUALCUSTOMERADDED);
 	}
 
 	@Override
 	public Result delete(DeleteIndividualCustomerRequest deleteIndividualCustomerRequest) {
-		checkIfExistByEmail(deleteIndividualCustomerRequest.getEmail());
+		checkIfExistsByEmail(deleteIndividualCustomerRequest.getEmail());
 		
 		this.individualCustomerDao.delete(this.individualCustomerDao.getByEmail(deleteIndividualCustomerRequest.getEmail()));
 		
-		return new SuccessResult("IndividualCustomer silindi");
+		return new SuccessResult(BusinessMessages.INDIVIDUALCUSTOMERDELETED);
 	}
 
 	@Override
 	public Result update(UpdateIndividualCustomerRequest updateIndividualCustomerRequest) {
 		
-		checkIfExistByEmail(updateIndividualCustomerRequest.getEmail());
-		checkIfExistByIdentityNumber(updateIndividualCustomerRequest.getIdentityNumber());
+		checkIfExistsByEmail(updateIndividualCustomerRequest.getEmail());
+		checkIfExistsByIdentityNumber(updateIndividualCustomerRequest.getIdentityNumber());
 		
 		IndividualCustomer individualCustomer= this.modelMapperService.forRequest().map(updateIndividualCustomerRequest, IndividualCustomer.class);
 		individualCustomer.setUserId(this.individualCustomerDao.getByEmail(updateIndividualCustomerRequest.getEmail()).getUserId());
 		
 		this.individualCustomerDao.save(individualCustomer);
 		
-		return new SuccessResult("IndividualCustomer.update");
+		return new SuccessResult(BusinessMessages.INDIVIDUALCUSTOMERUPDATED);
 	}
 
 	@Override
@@ -74,22 +75,41 @@ public class IndividualCustomerManager implements IndividualCustomerService{
 		var result = this.individualCustomerDao.findAll();
 		List<ListIndividualCustomerDto> response = result.stream().map(individualCustomer -> this.modelMapperService.forDto().map(individualCustomer, ListIndividualCustomerDto.class)).collect(Collectors.toList());
 		
-		return new SuccessDataResult<List<ListIndividualCustomerDto>>(response);
+		return new SuccessDataResult<List<ListIndividualCustomerDto>>(response, BusinessMessages.SUCCESS);
 	}
+	
+	
+	
 
-	private boolean checkIfExistByEmail(String email) {
+	private boolean checkIfExistsByEmail(String email) {
 		var result = this.individualCustomerDao.getByEmail(email);
 		if(result==null) {
-			throw new BusinessException("Bu maile sahip IndividualCustomer bulunamadı");
+			throw new BusinessException(BusinessMessages.INDIVIDUALCUSTOMEREXISTSEMAIL);
 		}
 		return true;
 	}
-	private boolean checkIfExistByIdentityNumber(String identityNumber) {
+	private boolean checkIfExistsByIdentityNumber(String identityNumber) {
 		var result = this.individualCustomerDao.getByIdentityNumber(identityNumber);
 		if(result==null) {
-			throw new BusinessException("Bu identityNumberda bir individualCustomer bulunamadı");
+			throw new BusinessException(BusinessMessages.INDIVIDUALCUSTOMEREXISTSIDENTITYNUMBER);
 		}
 		return true;
+	}
+	
+	private boolean checkIfNotExistsByEmail(String email) {
+		var result = this.individualCustomerDao.getByEmail(email);
+		if(result==null) {
+			return true;
+		}
+		throw new BusinessException(BusinessMessages.INDIVIDUALCUSTOMERNOTEXISTSEMAIL);
+	}
+	
+	private boolean checkIfNotExistsByIdentityNumber(String identityNumber) {
+		var result = this.individualCustomerDao.getByIdentityNumber(identityNumber);
+		if(result == null) {
+			return true;
+		}
+		throw new BusinessException(BusinessMessages.INDIVIDUALCUSTOMERNOTEXISTSIDENTITYNUMBER);
 	}
 	
 

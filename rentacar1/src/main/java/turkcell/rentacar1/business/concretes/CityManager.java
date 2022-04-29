@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 
 import turkcell.rentacar1.business.abstracts.CityService;
-
+import turkcell.rentacar1.business.constants.BusinessMessages;
 import turkcell.rentacar1.business.dtos.ListCityDto;
 import turkcell.rentacar1.business.requests.creates.CreateCityRequest;
 import turkcell.rentacar1.business.requests.deletes.DeleteCityRequest;
@@ -39,7 +39,7 @@ public class CityManager implements CityService {
 			City city = this.modelMapperService.forRequest().map(createCityRequest, City.class);
 			
 			this.cityDao.save(city);
-			return new SuccessResult("City.added");
+			return new SuccessResult(BusinessMessages.CITYADDED);
 	}
 
 
@@ -50,7 +50,7 @@ public class CityManager implements CityService {
 		
 			this.cityDao.deleteById(deleteCityRequest.getCityId());
 		
-			return new SuccessResult("City.deleted");
+			return new SuccessResult(BusinessMessages.CITYDELETED);
 	}
 
 
@@ -60,16 +60,16 @@ public class CityManager implements CityService {
 		var result = this.cityDao.findAll();
 		List<ListCityDto> response = result.stream()
 				.map(city -> this.modelMapperService.forDto().map(city, ListCityDto.class)).collect(Collectors.toList());
-		return new SuccessDataResult<List<ListCityDto>>(response,"Success");
+		return new SuccessDataResult<List<ListCityDto>>(response,BusinessMessages.SUCCESS);
 	}
 	@Override
 	public City getByIdAllService(int cityId) {
 		return cityDao.getByCityId(cityId);
 	}
-	
-	private boolean checkIfExistByCityId(int cityId) {
+	@Override
+	public boolean checkIfExistByCityId(int cityId) {
 		if(this.cityDao.getByCityId(cityId)==null) {
-			throw new BusinessException("Brand not found");
+			throw new BusinessException(BusinessMessages.CITYNOTFOUND);
 		}
 		return true;
 	}
@@ -78,7 +78,7 @@ public class CityManager implements CityService {
 		City city = this.cityDao.getByCityName(cityName);
 		
 		if(city != null) {
-			throw new BusinessException("City have is name");
+			throw new BusinessException(BusinessMessages.CITYEXISTSNAME);
 		}
 		return true;
 	}

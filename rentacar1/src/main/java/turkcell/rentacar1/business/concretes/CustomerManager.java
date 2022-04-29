@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import turkcell.rentacar1.business.abstracts.CustomerService;
+import turkcell.rentacar1.business.constants.BusinessMessages;
 import turkcell.rentacar1.core.concretes.BusinessException;
 import turkcell.rentacar1.dataAccess.abstracts.CustomerDao;
 import turkcell.rentacar1.entities.concretes.Customer;
@@ -30,7 +31,7 @@ public class CustomerManager implements CustomerService {
 			
 			var result= this.customerDao.getByCustomerId(customerId);
 			if(result ==null) {
-				throw new BusinessException("Bu idye sahip Customer bulunamadı");
+				throw new BusinessException(BusinessMessages.CUSTOMERNOTFOUND);
 			}
 			return true;
 		}

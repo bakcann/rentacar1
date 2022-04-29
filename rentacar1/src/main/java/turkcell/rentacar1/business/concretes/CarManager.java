@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import turkcell.rentacar1.business.abstracts.BrandService;
 import turkcell.rentacar1.business.abstracts.CarService;
 import turkcell.rentacar1.business.abstracts.ColorService;
+import turkcell.rentacar1.business.constants.BusinessMessages;
 import turkcell.rentacar1.business.dtos.GetListCarDto;
 import turkcell.rentacar1.business.dtos.ListCarDto;
 import turkcell.rentacar1.business.requests.creates.CreateCarRequest;
@@ -20,7 +21,6 @@ import turkcell.rentacar1.business.requests.updates.UpdateCarRequest;
 import turkcell.rentacar1.core.concretes.BusinessException;
 import turkcell.rentacar1.core.utilities.mapping.ModelMapperService;
 import turkcell.rentacar1.core.utilities.results.DataResult;
-import turkcell.rentacar1.core.utilities.results.ErrorDataResult;
 import turkcell.rentacar1.core.utilities.results.Result;
 import turkcell.rentacar1.core.utilities.results.SuccessDataResult;
 import turkcell.rentacar1.core.utilities.results.SuccessResult;
@@ -53,7 +53,7 @@ public class CarManager implements CarService{
 		checkIfExistByColorId(car.getColor().getColorId());
 		
 			this.carDao.save(car);
-			return new SuccessResult("Araba eklendi");
+			return new SuccessResult(BusinessMessages.CARADDED);
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public class CarManager implements CarService{
 		    checkIfExistByCarId(deleteCarRequest.getCarId());
 		
 			this.carDao.deleteById(deleteCarRequest.getCarId());
-			return new SuccessResult("Araba silindi");
+			return new SuccessResult(BusinessMessages.CARDELETED);
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class CarManager implements CarService{
 		
 		this.carDao.save(car);
 		
-		return new SuccessResult("Araba güncellendi.");
+		return new SuccessResult(BusinessMessages.CARUPDATED);
 	}
 	
 	@Override
@@ -88,18 +88,17 @@ public class CarManager implements CarService{
 		List<ListCarDto> response = result.stream()
 				.map(car->this.modelMapperService.forDto()
 						.map(car, ListCarDto.class)).collect(Collectors.toList());
-		return new SuccessDataResult<List<ListCarDto>>(response,"Success");
+		return new SuccessDataResult<List<ListCarDto>>(response,BusinessMessages.SUCCESS);
 	}
 	
 	@Override
 	public DataResult<GetListCarDto> getByCarId(int carId)  {
 		
 		var result = this.carDao.getByCarId(carId);
-		if(result!=null) {
+		
 			GetListCarDto response = this.modelMapperService.forDto().map(result, GetListCarDto.class);
-		 return new SuccessDataResult<GetListCarDto>(response);
-		}
-		return new ErrorDataResult<GetListCarDto>("Bu id kullanılmamaktadır.");	
+		 return new SuccessDataResult<GetListCarDto>(response,BusinessMessages.SUCCESS);
+		
 	}
 	
 	@Override
@@ -112,7 +111,7 @@ public class CarManager implements CarService{
 				.map(car->this.modelMapperService.forDto()
 						.map(car, ListCarDto.class)).collect(Collectors.toList());
 		
-		return new SuccessDataResult<List<ListCarDto>>(response);
+		return new SuccessDataResult<List<ListCarDto>>(response, BusinessMessages.SUCCESS);
 	}
 
 	@Override
@@ -125,7 +124,7 @@ public class CarManager implements CarService{
 				.map(car->this.modelMapperService.forDto()
 						.map(car, ListCarDto.class)).collect(Collectors.toList());
 		
-		return new SuccessDataResult<List<ListCarDto>>(response);
+		return new SuccessDataResult<List<ListCarDto>>(response, BusinessMessages.SUCCESS);
 	}
 
 	@Override
@@ -137,7 +136,7 @@ public class CarManager implements CarService{
 				.map(car->this.modelMapperService.forDto()
 						.map(car, ListCarDto.class)).collect(Collectors.toList());
 		
-		return new SuccessDataResult<List<ListCarDto>>(response);
+		return new SuccessDataResult<List<ListCarDto>>(response, BusinessMessages.SUCCESS);
 	}
 	
 	@Override
@@ -146,21 +145,21 @@ public class CarManager implements CarService{
 		Car car = this.carDao.getByCarId(carId);
 		
 		if(car==null) {
-			throw new BusinessException("Böyle bir araba mevcut değil.");
+			throw new BusinessException(BusinessMessages.CARNOTFOUND);
 		}
 		return true;
 	}
 	
 	private boolean checkIfExistByBrandId(int brandId) {
 		if(this.brandService.getByBrandId(brandId)==null) {
-			throw new BusinessException("Böyle bir marka mevcut değil.");
+			throw new BusinessException(BusinessMessages.CAREXISTSBRAND);
 		}
 		return true;
 	}
 	
 	private boolean checkIfExistByColorId(int colorId) {
 		if(this.colorService.getByColorId(colorId)== null) {
-			throw new BusinessException("Böyle bir renk mevcut değil.");
+			throw new BusinessException(BusinessMessages.CAREXISTSCOLOR);
 		}
 		return true;
 	}

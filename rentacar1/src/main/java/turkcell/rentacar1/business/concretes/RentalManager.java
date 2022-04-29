@@ -15,6 +15,7 @@ import turkcell.rentacar1.business.abstracts.CityService;
 import turkcell.rentacar1.business.abstracts.CustomerService;
 import turkcell.rentacar1.business.abstracts.OrderedAdditionalServiceService;
 import turkcell.rentacar1.business.abstracts.RentalService;
+import turkcell.rentacar1.business.constants.BusinessMessages;
 import turkcell.rentacar1.business.dtos.GetListRentalDto;
 import turkcell.rentacar1.business.dtos.ListRentalDto;
 import turkcell.rentacar1.business.requests.creates.CreateRentalRequest;
@@ -65,37 +66,37 @@ public class RentalManager implements RentalService{
 		checkIfCarNotInRent(createRentalRequest.getCarId());
 		checkIfExistCityId(createRentalRequest.getRentCityId());
 		checkIfExistCityId(createRentalRequest.getReturnCityId());
-		checkIfPlanedReturnDateAdterRentDate(createRentalRequest.getRentDate(), createRentalRequest.getPlannedReturnDate());
+		checkIfPlanedReturnDateAfterRentDate(createRentalRequest.getRentDate(), createRentalRequest.getPlannedReturnDate());
 		
 		Rental rental =toAllAdd(createRentalRequest);
 		this.rentalDao.save(rental);
 		
-		return new SuccessDataResult<Rental>(rental,"Rental.added");
+		return new SuccessDataResult<Rental>(rental,BusinessMessages.RENTALADDED);
 	}
 
 
 	@Override
 	public Result delete(DeleteRentalRequest deleteRentalRequest) {
 		
-		checkIfExistRentalId(deleteRentalRequest.getRentId());
+		checkIfExistsRentalId(deleteRentalRequest.getRentId());
 		
 		this.rentalDao.deleteById(deleteRentalRequest.getRentId());
 		
-		return new SuccessResult("Rental.deleted");
+		return new SuccessResult(BusinessMessages.RENTALDELETED);
 	}
 
 
 	@Override
 	public DataResult<Rental> update(UpdateRentalRequest updateRentalRequest) {
 		
-		checkIfExistRentalId(updateRentalRequest.getRentalId());
+		checkIfExistsRentalId(updateRentalRequest.getRentalId());
 		checkIfExistCityId(updateRentalRequest.getReturnCityId());
-		checkIfReturnDateAfterPlannedReturnDate(this.rentalDao.getByRentalId(updateRentalRequest.getRentalId()).getPlannedReturnDate(), updateRentalRequest.getRentReturnDate());
+		checkIfReturnDateAfterPlannedReturnDate(this.rentalDao.getByRentId(updateRentalRequest.getRentalId()).getPlannedReturnDate(), updateRentalRequest.getRentReturnDate());
 		
 		Rental rental = toAllUpdate(updateRentalRequest);
 		rentalDao.save(rental);
 		
-		return new SuccessDataResult<Rental>(rental, "Rental.updated");
+		return new SuccessDataResult<Rental>(rental, BusinessMessages.RENTALUPDATED);
 	}
 
 
@@ -105,18 +106,18 @@ public class RentalManager implements RentalService{
 		var result = this.rentalDao.findAll();
 		List<ListRentalDto> response = result.stream().map(rental -> this.modelMapperService.forDto().map(rental, ListRentalDto.class)).collect(Collectors.toList());
 		
-		return new SuccessDataResult<List<ListRentalDto>>(response,"Success");
+		return new SuccessDataResult<List<ListRentalDto>>(response,BusinessMessages.SUCCESS);
 	}
 
 
 	@Override
 	public DataResult<GetListRentalDto> getByRentalId(int rentId) {
-		checkIfExistRentalId(rentId);
+		checkIfExistsRentalId(rentId);
 		
-		var result= this.rentalDao.getByRentalId(rentId);
+		var result= this.rentalDao.getByRentId(rentId);
 		GetListRentalDto response = this.modelMapperService.forDto().map(result, GetListRentalDto.class);
 		
-		return new SuccessDataResult<GetListRentalDto>(response,"Success");
+		return new SuccessDataResult<GetListRentalDto>(response,BusinessMessages.SUCCESS);
 	}
 
 
@@ -126,14 +127,14 @@ public class RentalManager implements RentalService{
 		
 		var result = this.rentalDao.getByCar_carId(carId);
 		List<GetListRentalDto> response = result.stream().map(rental -> this.modelMapperService.forDto().map(rental, GetListRentalDto.class)).collect(Collectors.toList());
-		return new SuccessDataResult<List<GetListRentalDto>>(response,"Success");
+		return new SuccessDataResult<List<GetListRentalDto>>(response,BusinessMessages.SUCCESS);
 	}
 
 
 	@Override
-	public boolean checkIfExistRentalId(int rentId) {
-		if(this.rentalDao.getByRentalId(rentId)==null) {
-			throw new BusinessException("Dont find this rental");
+	public boolean checkIfExistsRentalId(int rentId) {
+		if(this.rentalDao.getByRentId(rentId)==null) {
+			throw new BusinessException(BusinessMessages.RENTALNOTFOUND);
 		}
 		return true;
 	}
@@ -141,8 +142,8 @@ public class RentalManager implements RentalService{
 
 	@Override
 	public boolean checkIfCarNotInRent(int carId) {
-		if(this.rentalDao.getByReturnDateAndCar_carId(null, carId)!=null) {
-			throw new BusinessException("CarNotInRentError");
+		if(this.rentalDao.getByRentReturnDateAndCar_carId(null, carId)!=null) {
+			throw new BusinessException(BusinessMessages.CARAVAILABLEFORRENTAL);
 		}
 		return true;
 	}
@@ -174,7 +175,7 @@ public class RentalManager implements RentalService{
 
 	@Override
 	public void totalPriceIncludingAdditionalService(int rentId) {
-		Rental rental = this.rentalDao.getByRentalId(rentId);
+		Rental rental = this.rentalDao.getByRentId(rentId);
 		rental.setTotalPrice(calculatorTotalPrice(rental));
 		this.rentalDao.save(rental);
 		
@@ -182,16 +183,16 @@ public class RentalManager implements RentalService{
 	
 	private boolean checkIfReturnDateAfterPlannedReturnDate(LocalDate plannedReturnDate, LocalDate rentReturnDate) {
 		if(rentReturnDate.isBefore(plannedReturnDate)) {
-			throw new BusinessException("Returndate not after plannedReturnDate");
+			throw new BusinessException(BusinessMessages.RENTALRETURNDATEAFTERPLANNEDRETURNDATE);
 		}
 		return true;
 	}
 	
-	private boolean checkIfPlanedReturnDateAdterRentDate(LocalDate rentDate, LocalDate plannedReturnDate) {
+	private boolean checkIfPlanedReturnDateAfterRentDate(LocalDate rentDate, LocalDate plannedReturnDate) {
 		if(rentDate.isBefore(plannedReturnDate)) {
 			return true;
 		}
-		throw new BusinessException("RentDatenotAfterPlannedReturnDate");
+		throw new BusinessException(BusinessMessages.RENTALPLANNEDRETURNDATEAFTERRENTDATE);
 	}
 	private Rental toAllAdd(CreateRentalRequest createRentalRequest) {
 		
@@ -212,7 +213,7 @@ public class RentalManager implements RentalService{
 	}
 	
 	private Rental toAllUpdate(UpdateRentalRequest updateRentalRequest) {
-		Rental rental = this.rentalDao.getByRentalId(updateRentalRequest.getRentalId());
+		Rental rental = this.rentalDao.getByRentId(updateRentalRequest.getRentalId());
 		
 		rental.setReturnCity(this.cityService.getByIdAllService(updateRentalRequest.getReturnCityId()));
 		rental.setRentReturnDate(updateRentalRequest.getRentReturnDate());
@@ -229,7 +230,7 @@ public class RentalManager implements RentalService{
 	
 	private void setCarKilometer(Rental rental) {
 		if(rental.getFirstKilometer()> rental.getEndKilometer()) {
-			throw new BusinessException("SetCarKilometer error");
+			throw new BusinessException(BusinessMessages.RENTALSETCARKILOMETER);
 		}
 		this.carService.toSetCarKilometer(rental.getCar().getCarId(), rental.getEndKilometer());
 	}
@@ -237,7 +238,7 @@ public class RentalManager implements RentalService{
 	@Override
 	public Rental getByRentalIdForOtherServices(int rentId) {
 		
-		return this.rentalDao.getByRentalId(rentId);
+		return this.rentalDao.getByRentId(rentId);
 	}
 	
 	private boolean checkIfCarMaintenanceNotExistByCarId(int carId) {
@@ -250,17 +251,15 @@ public class RentalManager implements RentalService{
 	}
 	
 	private boolean checkIfOrderedAdditionalService(int rentId) {
-		if(this.orderedAdditionalServiceService.checkIfExistRentalByRentalId(rentId)) {
+		if(this.orderedAdditionalServiceService.checkIfExistsRentalByRentalId(rentId)) {
 			return true;
 		}
 		return false;
 	}
 	
 	private boolean checkIfExistCityId(int cityId) {
-		if(cityId >0&& cityId<82) {
-			return true;
-		}
-		throw new BusinessException("Not Exist CityId");
+		this.cityService.checkIfExistByCityId(cityId);
+		return true;
 		
 	}
 	

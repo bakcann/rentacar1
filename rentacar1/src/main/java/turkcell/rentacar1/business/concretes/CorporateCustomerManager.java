@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import turkcell.rentacar1.business.abstracts.CorporateCustomerService;
+import turkcell.rentacar1.business.constants.BusinessMessages;
 import turkcell.rentacar1.business.dtos.ListCorporateCustomerDto;
 import turkcell.rentacar1.business.requests.creates.CreateCorporateCustomerRequest;
 import turkcell.rentacar1.business.requests.deletes.DeleteCorporateCustomerRequest;
@@ -35,12 +36,13 @@ public class CorporateCustomerManager implements CorporateCustomerService {
 	@Override
 	public Result add(CreateCorporateCustomerRequest createCorporateCustomerRequest) {
 		
-		checkIfExistByEmail(createCorporateCustomerRequest.getEmail());
-		checkIfExistByTaxNumber(createCorporateCustomerRequest.getTaxNumber());
+		checkIfNotExistByEmail(createCorporateCustomerRequest.getEmail());
+		checkIfNotExıstsByTaxNumber(createCorporateCustomerRequest.getTaxNumber());
+		
 		CorporateCustomer corporateCustomer = this.modelMapperService.forRequest().map(createCorporateCustomerRequest, CorporateCustomer.class);
 		
 		this.corporateCustomerDao.save(corporateCustomer);
-		return new SuccessResult("CorporateCustomer eklendi");
+		return new SuccessResult(BusinessMessages.CORPORATECUSTOMERADDED);
 	}
 
 	@Override
@@ -50,7 +52,7 @@ public class CorporateCustomerManager implements CorporateCustomerService {
 		
 		this.corporateCustomerDao.delete(this.corporateCustomerDao.getByEmail(deleteCorporateCustomerRequest.getEmail()));
 		
-		return new SuccessResult("CorporateCustomer silindi");
+		return new SuccessResult(BusinessMessages.CORPORATECUSTOMERDELETED);
 	}
 
 	@Override
@@ -64,7 +66,7 @@ public class CorporateCustomerManager implements CorporateCustomerService {
 		
 		this.corporateCustomerDao.save(corporateCustomer);
 		
-		return new SuccessResult("CorporateCustomer güncellendi.");
+		return new SuccessResult(BusinessMessages.CORPORATECUSTOMERUPDATED);
 	}
 
 	@Override
@@ -74,7 +76,7 @@ public class CorporateCustomerManager implements CorporateCustomerService {
 		
 		List<ListCorporateCustomerDto> response = result.stream().map(corporateCustomer -> this.modelMapperService.forDto().map(corporateCustomer, ListCorporateCustomerDto.class)).collect(Collectors.toList());
 		
-		return new SuccessDataResult<List<ListCorporateCustomerDto>>(response, "Success");
+		return new SuccessDataResult<List<ListCorporateCustomerDto>>(response, BusinessMessages.SUCCESS);
 	}
 
 	
@@ -84,9 +86,11 @@ public class CorporateCustomerManager implements CorporateCustomerService {
 		var result = this.corporateCustomerDao.getByEmail(email);
 		
 		if(result==null) {
-			throw new BusinessException("Bu maile sahip Corporate Custoomer bulunamadı");
+			throw new BusinessException(BusinessMessages.CORPORATECUSTOMEREXISTSEMAIL);
 		}
 		return true;
+		
+		
 	}
 	
 	private boolean checkIfExistByTaxNumber(String taxNumber) {
@@ -94,9 +98,26 @@ public class CorporateCustomerManager implements CorporateCustomerService {
 		var result = this.corporateCustomerDao.getByTaxNumber(taxNumber);
 		
 		if(result== null) {
-			throw new BusinessException("Bu tax numbera sahip Corporate customer bulunamadı.");
+			throw new BusinessException(BusinessMessages.CORPORATECUSTOMEREXISTSTAXNUMBER);
 		}
 		return true;
+	}
+	
+	private boolean checkIfNotExistByEmail(String email) {
+		var result = this.corporateCustomerDao.getByEmail(email);
+		if(result==null) {
+			return true;
+		}
+		throw new BusinessException(BusinessMessages.CORPORATECUSTOMERNOTEXISTSEMAIL);
+	}
+	
+	private boolean checkIfNotExıstsByTaxNumber(String taxNumber) {
+		var result = this.corporateCustomerDao.getByTaxNumber(taxNumber);
+		
+		if(result == null) {
+			return true;
+		}
+		throw new BusinessException(BusinessMessages.CORPORATECUSTOMERNOTEXISTSTAXNUMBER);
 	}
 	
 }

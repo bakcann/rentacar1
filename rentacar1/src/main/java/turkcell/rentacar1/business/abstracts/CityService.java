@@ -18,5 +18,7 @@ public interface CityService {
 	
 	public City getByIdAllService(int cityId);
 	
+	public boolean checkIfExistByCityId(int cityId);
+	
 
 }
